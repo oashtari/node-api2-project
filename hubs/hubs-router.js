@@ -9,18 +9,20 @@ const router = express.Router(); // invoke router
 // router only cares about what after /api/posts
 
 router.post("/", (req, res) => {
-    const post = req.body;
+    const { title, contents } = req.body;
     // console.log('the post content', post)
 
-    if (!post.title || !post.contents) {
+    if (!title || !contents) {
         res.status(400)
             .json({ errorMessage: "Please provide title and contents for the post." })
-    } else if (post) {
-        console.log('yes post content', post)
-        Hubs.insert(post)
-            .then(post => {
-                res.status(201)
-                    .json(post)
+    } else if (title && contents) {
+        Hubs.insert({ title: title, contents: contents })
+            .then(postID => {
+                Hubs.findById(postID.id)
+                    .then(post =>
+                        res.status(201)
+                            .json(post)
+                    )
             })
     } else {
         res.status(500)
@@ -32,14 +34,19 @@ router.post("/", (req, res) => {
 });
 
 router.post("/:id/comments", (req, res) => {
+    console.log('what is req', req.body)
+    // const { text, post_id } = req.body;
+
     if (req.body) {
         res.status(200)
-            .json(posts)
+            .json({ message: 'testing posting comments' })
     } else {
         res.status(500)
             .json({ error: "The posts information could not be retrieved." })
     }
 });
+
+
 
 router.get("/", (req, res) => {
 
@@ -64,7 +71,6 @@ router.get('/:id', (req, res) => {
             } else {
                 res.status(404).json({ message: "The post with the specified ID does not exist." })
             }
-
         })
         .catch(error => {
             // log error to database
@@ -75,38 +81,26 @@ router.get('/:id', (req, res) => {
         });
 });
 
-router.get("/:id", (req, res) => {
-    const post = posts.find(post => post.id === req.params.id)
+router.get('/:id/comments', (req, res) => {
+    Hubs.findById(req.params.id)
+        .then(hub => {
+            if (hub) {
+                res.status(200).json(hub)
+            } else if (!hub) {
+                res.status(404)
+                    .json({ message: "The post with the specified ID does not exist." })
+            }
+        })
+        .catch(err => {
+            res.status(500)
+                .json({ error: "The comments information could not be retrived." })
+        })
+})
 
-    if (post) {
-        res.status(200)
-            .json(posts)
-    } else if (!post) {
-        res.status(404)
-            .json({ message: "The post with specified ID does not exist." })
-    } else {
-        res.status(500)
-            .json({ error: "The posts information could not be retrieved." })
-    }
-});
 
-// server.get('/api/users/:id', (req, res) => {
-//     const user = users.find(user => user.id === req.params.id);
 
-//     if (user) {
-//         res
-//             .status(200)
-//             .json(user)
-//     } else if (!user) {
-//         res
-//             .status(404)
-//             .json({ message: "The user with the specified ID does not exist." })
-//     } else {
-//         res
-//             .status(500)
-//             .json({ message: "The user information could not be retrieved." })
-//     }
-// })
+
+
 
 
 
@@ -115,8 +109,24 @@ router.post("/:id/comments", (req, res) => {
 });
 
 router.delete("/:id", (req, res) => {
+    Hubs.remove(req.params.id)
+        .then(post => {
+            if (post) {
+                res.status(200)
+                    .json({ message: "that post is GONE" })
+            } else {
+                res.status(404)
+                    .json({ message: "The post with the specified ID does not exist." })
+            }
+        })
+        .catch(error => {
+            res.status(500)
+                .json({ error: "The post could not be removed." })
+        })
 
 });
+
+
 
 router.put("/:id", (req, res) => {
 
