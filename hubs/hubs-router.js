@@ -28,28 +28,44 @@ router.post("/", (req, res) => {
         res.status(500)
             .json({ error: "There was an error while saving the post to the database." })
     }
-
-
-
 });
+
 
 router.post("/:id/comments", (req, res) => {
-    console.log('what is req', req.body)
-    // const { text, post_id } = req.body;
+    const id = req.params.id;
+    const { text } = req.body;
 
-    if (req.body) {
-        res.status(200)
-            .json({ message: 'testing posting comments' })
+    if (text) {
+        Hubs.findById(id)
+            .then(post => {
+                if (post) {
+                    Hubs.insertComment({ text: text, post_id: id })
+                        .then(() => {
+                            res.status(201)
+                                .json(text)
+                        })
+                        .catch(error => {
+                            res.status(500)
+                                .json({ message: "There was an error while saving the comment to the database." })
+                        })
+                } else {
+                    res.status(404)
+                        .json({ message: "The post with the specified ID does not exist." })
+                }
+            })
+            .catch(error => {
+                res.status(500)
+                    .json({ error: "Post could not be retrived." })
+            })
     } else {
-        res.status(500)
-            .json({ error: "The posts information could not be retrieved." })
+        res.status(400)
+            .json({ message: "Please provide text for the comment." })
     }
-});
 
+});
 
 
 router.get("/", (req, res) => {
-
     Hubs.find()
         .then(posts => {
             if (posts) {
