@@ -10,18 +10,25 @@ const router = express.Router(); // invoke router
 
 router.post("/", (req, res) => {
     const post = req.body;
+    // console.log('the post content', post)
 
     if (!post.title || !post.contents) {
         res.status(400)
             .json({ errorMessage: "Please provide title and contents for the post." })
-    } else if (post.title && post.contenxt) {
-        //SAVE TO DB
-        res.status(201)
-            .json(post)
+    } else if (post) {
+        console.log('yes post content', post)
+        Hubs.insert(post)
+            .then(post => {
+                res.status(201)
+                    .json(post)
+            })
     } else {
         res.status(500)
             .json({ error: "There was an error while saving the post to the database." })
     }
+
+
+
 });
 
 router.post("/:id/comments", (req, res) => {
@@ -35,13 +42,37 @@ router.post("/:id/comments", (req, res) => {
 });
 
 router.get("/", (req, res) => {
-    if (req.body) {
-        res.status(200)
-            .json(req.body)
-    } else {
-        res.status(500)
-            .json({ error: "The posts information could not be retrieved." })
-    }
+
+    Hubs.find()
+        .then(posts => {
+            if (posts) {
+                res.status(200)
+                    .json(posts)
+            } else {
+                res.status(500)
+                    .json({ error: "The posts information could not be retrieved." })
+            }
+        })
+});
+
+
+router.get('/:id', (req, res) => {
+    Hubs.findById(req.params.id)
+        .then(hub => {
+            if (hub) {
+                res.status(200).json(hub);
+            } else {
+                res.status(404).json({ message: "The post with the specified ID does not exist." })
+            }
+
+        })
+        .catch(error => {
+            // log error to database
+            console.log(error);
+            res.status(500).json({
+                message: 'Error retrieving the hubs',
+            });
+        });
 });
 
 router.get("/:id", (req, res) => {
