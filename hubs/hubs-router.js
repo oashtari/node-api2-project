@@ -97,8 +97,10 @@ router.get('/:id', (req, res) => {
         });
 });
 
+
+//FIX THIS  -- JUST ADDED FIND POST COMMENTS METHOD
 router.get('/:id/comments', (req, res) => {
-    Hubs.findById(req.params.id)
+    Hubs.findPostComments(req.params.id)
         .then(hub => {
             if (hub) {
                 res.status(200).json(hub)
@@ -112,12 +114,6 @@ router.get('/:id/comments', (req, res) => {
                 .json({ error: "The comments information could not be retrived." })
         })
 })
-
-
-
-
-
-
 
 
 router.post("/:id/comments", (req, res) => {
@@ -145,73 +141,66 @@ router.delete("/:id", (req, res) => {
 
 
 router.put("/:id", (req, res) => {
+    const { id } = req.params;
 
-});
-
-// router.put("/api/posts", (req, res)=>{
-// });
-// router.put("/api/posts", (req, res)=>{
-// });
-
-module.exports = router;
+    const changes = req.body;
+    console.log(changes);
 
 
+    // if (!changes.title || !changes.contents) {
+    //     res.status(400)
+    //         .json({ message: "Please provide title and contents for the post." })
+    // } else {
+    if (changes.title && changes.contents) {
+        Hubs.update(id, changes)
+            .then(result => {
+                if (result) {
+                    Hubs.findById(id)
+                        .then(post => {
+                            res.status(200)
+                                .json(post)
+                        })
+                        .catch(error => {
+                            res.status(500)
+                                .json({ error: "The post information could not be modified." })
+                        })
+                } else {
+                    res.status(404)
+                        .json({ message: "The post with the specified ID does not exist." })
+                }
+            })
+            .catch(error => {
+                res.status(400)
+                    .json({ message: "Please provide title and contents for the post." })
+            })
+    }
 
-// GET to api/users
+    // Hubs.findById(id)
+    //     .then(post => {
+    //         console.log('is this the right post', post)
+    //         if (changes) {
+    //             Hubs.udpate(id, changes)
+    //                 .then(() => {
+    //                     res.status(200)
+    //                         .json(post)
+    //                 })
+    //                 .catch(error => {
+    //                     res.status(500)
+    //                         .json({ error: "The post information could not be modified." })
+    //                 })
+    //         } else {
+    //             res.status(404)
+    //                 .json({ message: "The post with the specified ID does not exist." })
+    //         }
+    //     })
+})
 
-// server.get('/api/users', (req, res) => {
-//     if (req.body) {
-//         res
-//             .status(200)
-//             .json(users)
-//     } else {
-//         res
-//             .status(500)
-//             .json({ message: "The users information could not be retrieved." })
-//     }
-// })
-
-
-// GET to api/user/:id
-
-
-
-// DELETE
-
-// server.delete('/api/users/:id', (req, res) => {
-//     const { id } = req.params;
-
-//     const deleted = users.find(user => JSON.stringify(user.id) === `${id}`)
-
-//     if (deleted) {
-//         users = users.filter(user => user.id !== id)
-
-//         res
-//             .status(200)
-//             .json(deleted)
-
-//     } else if (!deleted) {
-//         res
-//             .status(404)
-//             .json({ message: "The user with the specified ID does not exist." })
-//     } else {
-//         res
-//             .status(500)
-//             .json({ message: "The user could not be removed." })
-//     }
-// })
-
-// PUT
 
 // server.put('/api/users/:id', (req, res) => {
 
 //     const { id } = req.params;
 
 //     const changes = req.body;
-
-//     console.log('changes:', changes)
-//     console.log('id', id)
-
 //     let index = users.findIndex(user => JSON.stringify(user.id) === JSON.stringify(id));
 
 //     if (!changes.name || !changes.bio) {
@@ -233,3 +222,7 @@ module.exports = router;
 //             .json({ message: "The user information could not be modified." })
 //     }
 // })
+
+
+
+module.exports = router;
